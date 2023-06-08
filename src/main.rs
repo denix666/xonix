@@ -40,7 +40,7 @@ pub enum GameState {
     InitLevel,
     LevelCompleted,
     LevelFailed,
-    GameCompleted,
+    GameOver,
 }
 
 fn fill(map: &mut Vec<Vec<Field>>, enemies: &Vec<Enemy>) -> i32 {
@@ -115,12 +115,16 @@ async fn main() {
                 map.clear();
                 map = make_map_array(MAP_HEIGHT, MAP_WIDTH);
                 player = Player::new().await;
-                enemies.push(
-                    Enemy::new().await
-                );
-                enemies.push(
-                    Enemy::new().await
-                );
+                enemies.clear();
+                game.ratio = 0;
+
+                // Add number of enemies depends on level number
+                for _ in 0..game.lvl_num {
+                    enemies.push(
+                        Enemy::new().await
+                    );
+                }
+
                 game_state=GameState::Game;
             },
             GameState::Game => {
@@ -176,6 +180,12 @@ async fn main() {
                                 // Check and fill
                                 player.dir = player::Dir::None;
                                 game.ratio =  fill(&mut map, &enemies);
+
+                                game.score += game.ratio;
+
+                                if game.ratio > 90 {
+                                    game_state=GameState::LevelCompleted
+                                }
                             }
                         }
                     }
@@ -205,10 +215,22 @@ async fn main() {
                 );
             },
             GameState::LevelCompleted => {
-
+                if is_key_pressed(KeyCode::Space) {
+                    game.lvl_num += 1;
+                    game_state=GameState::InitLevel;
+                }
             },
             GameState::LevelFailed=> {
                 draw_map(&map);
+                draw_info(
+                    resources.font, 
+                    &game.score.to_string(), 
+                    &game.lives.to_string(), 
+                    &game.lvl_num.to_string(),
+                    &game.ratio.to_string(),
+                    ((MAP_WIDTH as i32) * 10) as f32,
+                    ((MAP_HEIGHT as i32) * 10) as f32,
+                );
                 if is_key_pressed(KeyCode::Space) {
                     // Revert back sand to sea
                     for y in 0..MAP_WIDTH {
@@ -218,12 +240,23 @@ async fn main() {
                             }
                         }
                     }
-                    player = Player::new().await;
-                    game_state=GameState::Game;
+                    if game.lives >= 1 {
+                        game.lives -= 1;
+                        player = Player::new().await;
+                        game_state=GameState::Game;
+                    } else {
+                        game_state=GameState::GameOver;
+                        println!("Game over, press space to start new game");
+                    }
                 } 
             },
-            GameState::GameCompleted => {
-
+            GameState::GameOver => {
+                if is_key_pressed(KeyCode::Space) {
+                    game.score = 0;
+                    game.lvl_num = 1;
+                    game.lives = 2;
+                    game_state=GameState::InitLevel;
+                }
             }, 
         }
 
