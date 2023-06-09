@@ -12,13 +12,18 @@ use levels::*;
 mod player;
 use player::Player;
 
-mod enemy;
-use enemy::Enemy;
+mod sea_enemy;
+use sea_enemy::SeaEnemy;
+
+mod land_enemy;
+use land_enemy::LandEnemy;
 
 const MAP_WIDTH: usize = 75;
 const MAP_HEIGHT: usize = 50;
 const INFO_BAR_HEIGHT: f32 = 40.0;
 const WIN_RATIO: i32 = 80;
+const SEA_ENEMY_SPEED: f64 = 0.04;
+const LAND_ENEMY_SPEED: f64 = 0.10;
 
 fn conf() -> Conf {
     let mut title = String::from("Xonix v");
@@ -44,7 +49,7 @@ pub enum GameState {
     GameOver,
 }
 
-fn fill(map: &mut Vec<Vec<Field>>, enemies: &Vec<Enemy>) -> i32 {
+fn fill(map: &mut Vec<Vec<Field>>, enemies: &Vec<SeaEnemy>) -> i32 {
     let mut q = std::collections::VecDeque::new();
     
     for y in 1..MAP_WIDTH - 1 {
@@ -100,7 +105,8 @@ async fn main() {
     let mut map: Vec<Vec<Field>> = make_map_array(MAP_HEIGHT, MAP_WIDTH);
     let mut game = Game::new().await;
     let mut player = Player::new().await;
-    let mut enemies: Vec<Enemy> = Vec::new();
+    let mut sea_enemies: Vec<SeaEnemy> = Vec::new();
+    let mut land_enemies: Vec<LandEnemy> = Vec::new();
 
     loop {
         clear_background(BLACK);
@@ -119,13 +125,19 @@ async fn main() {
                 map.clear();
                 map = make_map_array(MAP_HEIGHT, MAP_WIDTH);
                 player = Player::new().await;
-                enemies.clear();
+                sea_enemies.clear();
                 game.ratio = 0;
 
                 // Add number of enemies depends on level number
                 for _ in 0..game.lvl_num {
-                    enemies.push(
-                        Enemy::new().await
+                    sea_enemies.push(
+                        SeaEnemy::new().await
+                    );
+                }
+
+                for _ in 0..game.lvl_num {
+                    land_enemies.push(
+                        LandEnemy::new().await
                     );
                 }
 
@@ -184,7 +196,7 @@ async fn main() {
                             if player.previous_point != Field::Land {
                                 // Check and fill
                                 player.dir = player::Dir::None;
-                                game.ratio =  fill(&mut map, &enemies);
+                                game.ratio =  fill(&mut map, &sea_enemies);
 
                                 game.score += game.ratio;
 
@@ -198,8 +210,8 @@ async fn main() {
 
                 player.draw();
 
-                for enemy in &mut enemies {
-                    if map[enemy.pos_x][enemy.pos_y] == Field::Sand {
+                for sea_enemy in &mut sea_enemies {
+                    if map[sea_enemy.pos_x][sea_enemy.pos_y] == Field::Sand {
                         if game.lives >= 1 {
                             game.lives -= 1;
                             game_state=GameState::LevelFailed;
@@ -207,11 +219,19 @@ async fn main() {
                             game_state=GameState::GameOver;
                         }
                     }
-                    if get_time() - enemy.last_move >= 0.04 {
-                        enemy.update(&map);
-                        enemy.last_move = get_time();
+                    if get_time() - sea_enemy.last_move >= SEA_ENEMY_SPEED {
+                        sea_enemy.update(&map);
+                        sea_enemy.last_move = get_time();
                     }
-                    enemy.draw();
+                    sea_enemy.draw();
+                }
+
+                for land_enemy in &mut land_enemies {
+                    if get_time() - land_enemy.last_move >= LAND_ENEMY_SPEED {
+                        land_enemy.update(&map);
+                        land_enemy.last_move = get_time();
+                    }
+                    land_enemy.draw();
                 }
                 
                 draw_info(

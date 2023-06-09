@@ -10,7 +10,7 @@ pub enum VerticalDir {
     Down,
 }
 
-pub struct Enemy {
+pub struct SeaEnemy {
     pub x: f32,
     pub y: f32,
     pub pos_x: usize,
@@ -21,7 +21,7 @@ pub struct Enemy {
 }
 
 
-impl Enemy {
+impl SeaEnemy {
     pub async fn new() -> Self {
         let rand_x = macroquad::rand::gen_range(20, super::MAP_WIDTH - 20);
         let rand_y = macroquad::rand::gen_range(20, super::MAP_HEIGHT - 20);
