@@ -1,6 +1,4 @@
 use macroquad::prelude::*;
-extern crate rand;
-use rand::Rng;
 
 pub enum HorizontalDir {
     Left,
@@ -25,15 +23,15 @@ pub struct Enemy {
 
 impl Enemy {
     pub async fn new() -> Self {
-        let rand_x = rand::thread_rng().gen_range(20..=super::MAP_WIDTH - 20);
-        let rand_y = rand::thread_rng().gen_range(20..=super::MAP_HEIGHT - 20);
+        let rand_x = macroquad::rand::gen_range(20, super::MAP_WIDTH - 20);
+        let rand_y = macroquad::rand::gen_range(20, super::MAP_HEIGHT - 20);
 
-        let rand_horizontal_dir: HorizontalDir = match rand::thread_rng().gen_range(0..=1) { 
+        let rand_horizontal_dir: HorizontalDir = match macroquad::rand::gen_range(0, 1) { 
             0 => HorizontalDir::Right,
             _ => HorizontalDir::Left,
         };
 
-        let rand_vertical_dir: VerticalDir = match rand::thread_rng().gen_range(0..=1) { 
+        let rand_vertical_dir: VerticalDir = match macroquad::rand::gen_range(0, 1) { 
             0 => VerticalDir::Up,
             _ => VerticalDir::Down,
         };

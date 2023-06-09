@@ -1,8 +1,10 @@
 use macroquad::{
     shapes::draw_rectangle, 
-    prelude::{DARKBLUE, BLACK, ORANGE, WHITE, DARKGRAY}, 
+    prelude::{ORANGE, WHITE, DARKGRAY, BROWN}, 
     text::{Font, draw_text_ex, TextParams}
 };
+
+use crate::resources::Resources;
 
 #[derive(Clone, PartialEq, Copy)]
 pub enum Field {
@@ -10,6 +12,29 @@ pub enum Field {
     Sea,
     War,
     Sand,
+}
+
+pub async fn background_texture(level: i32, resources: &Resources) -> macroquad::texture::Texture2D {
+    let texture: macroquad::texture::Texture2D;
+    match level {
+        1 => {
+            texture = resources.bg_1
+        },
+        2 => {
+            texture = resources.bg_2
+        },
+        3 => {
+            texture = resources.bg_3
+        },
+        4 => {
+            texture = resources.bg_4
+        },
+        _ => {
+            texture = resources.bg_1
+        }
+    }
+
+    return texture
 }
 
 pub fn draw_info(
@@ -30,7 +55,7 @@ pub fn draw_info(
         DARKGRAY);
 
 
-    let info_text = format!("SCORE: {}     LIVES: {}     LEVEL: {}     RATIO: {}%", score, lives, lvl_num, ratio).to_string();
+    let info_text = format!("SCORE: {}   LIVES: {}   LEVEL: {}   RATIO: {}%", score, lives, lvl_num, ratio).to_string();
 
     draw_text_ex(info_text.as_str(), 40.0, map_height + 30.0, 
         TextParams {
@@ -49,21 +74,14 @@ pub fn draw_map(map: &Vec<Vec<Field>>) {
     for i in 0..r {
         for j in 0..c {
             match map[i][j] {
-                Field::Land => { // Land (0)
-                    draw_rectangle(
-                        i as f32 * 10.0, 
-                        j as f32 * 10.0,
-                        10.0, 
-                        10.0, 
-                        BLACK)
-                },
+                Field::Land => {},
                 Field::Sea => { // Sea (1)
                     draw_rectangle(
                         i as f32 * 10.0, 
                         j as f32 * 10.0,
                         10.0, 
                         10.0, 
-                        DARKBLUE)
+                        BROWN)
                 },
                 Field::Sand => { // Sand (2)
                     draw_rectangle(

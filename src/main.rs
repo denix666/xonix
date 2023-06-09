@@ -15,9 +15,10 @@ use player::Player;
 mod enemy;
 use enemy::Enemy;
 
-const MAP_WIDTH: usize = 80;
-const MAP_HEIGHT: usize = 60;
+const MAP_WIDTH: usize = 75;
+const MAP_HEIGHT: usize = 50;
 const INFO_BAR_HEIGHT: f32 = 40.0;
+const WIN_RATIO: i32 = 80;
 
 fn conf() -> Conf {
     let mut title = String::from("Xonix v");
@@ -106,10 +107,13 @@ async fn main() {
 
         match game_state {
             GameState::Intro=> {
-                game.score = 0;
-                game.lvl_num = 1;
-                game.lives = 2;
-                game_state=GameState::InitLevel;
+                draw_texture(resources.intro_texture, 0.0, 0.0, WHITE);
+                if is_key_pressed(KeyCode::Space) {
+                    game.score = 0;
+                    game.lvl_num = 1;
+                    game.lives = 2;
+                    game_state=GameState::InitLevel;
+                }
             },
             GameState::InitLevel => {
                 map.clear();
@@ -128,6 +132,7 @@ async fn main() {
                 game_state=GameState::Game;
             },
             GameState::Game => {
+                draw_texture(background_texture(game.lvl_num, &resources).await, 20.0, 20.0, WHITE);
                 draw_map(&map);
 
                 if is_key_pressed(KeyCode::Left) {
@@ -183,7 +188,7 @@ async fn main() {
 
                                 game.score += game.ratio;
 
-                                if game.ratio > 90 {
+                                if game.ratio >= WIN_RATIO {
                                     game_state=GameState::LevelCompleted
                                 }
                             }
@@ -195,7 +200,12 @@ async fn main() {
 
                 for enemy in &mut enemies {
                     if map[enemy.pos_x][enemy.pos_y] == Field::Sand {
-                        game_state=GameState::LevelFailed;
+                        if game.lives >= 1 {
+                            game.lives -= 1;
+                            game_state=GameState::LevelFailed;
+                        } else {
+                            game_state=GameState::GameOver;
+                        }
                     }
                     if get_time() - enemy.last_move >= 0.04 {
                         enemy.update(&map);
@@ -215,6 +225,17 @@ async fn main() {
                 );
             },
             GameState::LevelCompleted => {
+                draw_texture(background_texture(game.lvl_num, &resources).await, 20.0, 20.0, WHITE);
+                draw_info(
+                    resources.font, 
+                    &game.score.to_string(), 
+                    &game.lives.to_string(), 
+                    &game.lvl_num.to_string(),
+                    &game.ratio.to_string(),
+                    ((MAP_WIDTH as i32) * 10) as f32,
+                    ((MAP_HEIGHT as i32) * 10) as f32,
+                );
+                draw_texture(resources.level_completed_texture, 0.0, 0.0, WHITE);
                 if is_key_pressed(KeyCode::Space) {
                     game.lvl_num += 1;
                     game_state=GameState::InitLevel;
@@ -231,6 +252,7 @@ async fn main() {
                     ((MAP_WIDTH as i32) * 10) as f32,
                     ((MAP_HEIGHT as i32) * 10) as f32,
                 );
+                draw_texture(resources.level_failed_texture, 0.0, 0.0, WHITE);
                 if is_key_pressed(KeyCode::Space) {
                     // Revert back sand to sea
                     for y in 0..MAP_WIDTH {
@@ -240,17 +262,22 @@ async fn main() {
                             }
                         }
                     }
-                    if game.lives >= 1 {
-                        game.lives -= 1;
-                        player = Player::new().await;
-                        game_state=GameState::Game;
-                    } else {
-                        game_state=GameState::GameOver;
-                        println!("Game over, press space to start new game");
-                    }
+                    player = Player::new().await;
+                    game_state=GameState::Game;
                 } 
             },
             GameState::GameOver => {
+                draw_map(&map);
+                draw_info(
+                    resources.font, 
+                    &game.score.to_string(), 
+                    &game.lives.to_string(), 
+                    &game.lvl_num.to_string(),
+                    &game.ratio.to_string(),
+                    ((MAP_WIDTH as i32) * 10) as f32,
+                    ((MAP_HEIGHT as i32) * 10) as f32,
+                );
+                draw_texture(resources.game_over_texture, 0.0, 0.0, WHITE);
                 if is_key_pressed(KeyCode::Space) {
                     game.score = 0;
                     game.lvl_num = 1;

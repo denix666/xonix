@@ -1,10 +1,11 @@
 [package]
-name = "mqtpl"
+name = "xonix"
 version = "0.1.0"
 edition = "2021"
+authors = ["Denis Salmanovich"]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 macroquad = "0.3.25"
-rand = "0.8.5"
