@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  linux_build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Prep
+      run: sudo apt-get install libasound-dev -y
+      
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --release
+
+    - shell: bash
+      run: |
+        mv target/release/xonix xonix
+        chmod 777 xonix
+        tar cpfz xonix_linux_x86_64.tar.gz xonix assets
+        
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: xonix_linux_x86_64.tar.gz
+
+  win_build:
+    runs-on: windows-latest
+    steps:
+    - name: Install rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        target: x86_64-pc-windows-msvc
+        override: true
+
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --release
+
+    - shell: bash
+      run: |
+        mv target/release/xonix xonix
+        7z a xonix_windows_x86_64.zip xonix.exe assets
+        
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: xonix_windows_x86_64.zip
