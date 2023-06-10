@@ -126,6 +126,7 @@ async fn main() {
                 map = make_map_array(MAP_HEIGHT, MAP_WIDTH);
                 player = Player::new().await;
                 sea_enemies.clear();
+                land_enemies.clear();
                 game.ratio = 0;
 
                 // Add number of enemies depends on level number
@@ -230,6 +231,14 @@ async fn main() {
                     if get_time() - land_enemy.last_move >= LAND_ENEMY_SPEED {
                         land_enemy.update(&map);
                         land_enemy.last_move = get_time();
+                    }
+                    if land_enemy.pos_x == player.x && land_enemy.pos_y == player.y {
+                        if game.lives >= 1 {
+                            game.lives -= 1;
+                            game_state=GameState::LevelFailed;
+                        } else {
+                            game_state=GameState::GameOver;
+                        }
                     }
                     land_enemy.draw();
                 }
