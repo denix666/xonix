@@ -1,5 +1,3 @@
-use macroquad::prelude::*;
-
 pub struct Game {
     pub score: i32,
     pub lives: i32,
