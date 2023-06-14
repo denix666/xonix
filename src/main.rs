@@ -102,6 +102,8 @@ fn fill(map: &mut Vec<Vec<Field>>, enemies: &Vec<SeaEnemy>) -> i32 {
 
 #[macroquad::main(conf)]
 async fn main() {
+    macroquad::rand::srand(macroquad::miniquad::date::now() as _); // init rand with some unique data
+    
     let resources = Resources::new().await;
     let mut game_state = GameState::Intro;
     let mut map: Vec<Vec<Field>> = make_map_array(MAP_HEIGHT, MAP_WIDTH);
