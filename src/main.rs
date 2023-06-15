@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use macroquad::prelude::*;
+use macroquad_virtual_joystick::{Joystick, JoystickDirection};
 
 mod game;
 use game::Game;
@@ -104,6 +105,7 @@ fn fill(map: &mut Vec<Vec<Field>>, enemies: &Vec<SeaEnemy>) -> i32 {
 async fn main() {
     macroquad::rand::srand(macroquad::miniquad::date::now() as _); // init rand with some unique data
     
+    let mut joystick = Joystick::new((MAP_WIDTH * 10) as f32 - 120.0, (MAP_HEIGHT * 10) as f32 - 120.0, 150.0);
     let resources = Resources::new().await;
     let mut game_state = GameState::Intro;
     let mut map: Vec<Vec<Field>> = make_map_array(MAP_HEIGHT, MAP_WIDTH);
@@ -115,10 +117,12 @@ async fn main() {
     loop {
         clear_background(BLACK);
 
+        let joystick_event = joystick.update();
+
         match game_state {
             GameState::Intro=> {
                 draw_texture(resources.intro_texture, 0.0, 0.0, WHITE);
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
                     game.score = 0;
                     game.lvl_num = 1;
                     game.lives = 2;
@@ -164,6 +168,28 @@ async fn main() {
                 if is_key_pressed(KeyCode::Down) {
                     player.dir = player::Dir::Down
                 }
+
+                // virtual joystick
+                match joystick_event.direction {
+                    JoystickDirection::Up => {
+                        player.dir = player::Dir::Up;
+                    },
+                    JoystickDirection::UpLeft => {},
+                    JoystickDirection::Left => {
+                        player.dir = player::Dir::Left;
+                    },
+                    JoystickDirection::DownLeft => {},
+                    JoystickDirection::Down => {
+                        player.dir = player::Dir::Down;
+                    },
+                    JoystickDirection::DownRight => {},
+                    JoystickDirection::Right => {
+                        player.dir = player::Dir::Right;
+                    },
+                    JoystickDirection::UpRight => {},
+                    JoystickDirection::Idle => {},
+                }
+                
                 
                 if get_time() - player.last_move >= 0.04 {
                     player.previous_point = map[player.x][player.y];
@@ -256,6 +282,9 @@ async fn main() {
                     ((MAP_WIDTH as i32) * 10) as f32,
                     ((MAP_HEIGHT as i32) * 10) as f32,
                 );
+
+                #[cfg(target_arch = "wasm32")]
+                joystick.render();
             },
             GameState::LevelCompleted => {
                 draw_texture(background_texture(game.lvl_num, &resources).await, 20.0, 20.0, WHITE);
@@ -269,7 +298,7 @@ async fn main() {
                     ((MAP_HEIGHT as i32) * 10) as f32,
                 );
                 draw_texture(resources.level_completed_texture, 0.0, 0.0, WHITE);
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
                     game.lvl_num += 1;
                     game_state=GameState::InitLevel;
                 }
@@ -286,7 +315,7 @@ async fn main() {
                     ((MAP_HEIGHT as i32) * 10) as f32,
                 );
                 draw_texture(resources.level_failed_texture, 0.0, 0.0, WHITE);
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
                     // Revert back sand to sea
                     for y in 0..MAP_WIDTH {
                         for x in 0..MAP_HEIGHT {
@@ -311,7 +340,7 @@ async fn main() {
                     ((MAP_HEIGHT as i32) * 10) as f32,
                 );
                 draw_texture(resources.game_over_texture, 0.0, 0.0, WHITE);
-                if is_key_pressed(KeyCode::Space) {
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
                     game.score = 0;
                     game.lvl_num = 1;
                     game.lives = 2;
