@@ -4,6 +4,10 @@ version = "0.1.2"
 edition = "2021"
 authors = ["Denis Salmanovich"]
 readme = "README.md"
+description = "Remake of the old pc game xonix written in Rust and based on macroquad engine"
+repository = "https://github.com/denix666/xonix"
+ducumentation = "https://github.com/denix666/xonix/blob/main/README.md"
+license-file = "LICENSE"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
